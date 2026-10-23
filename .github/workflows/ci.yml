@@ -26,7 +26,8 @@ jobs:
           version: 12
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --config.only-built-dependencies=esbuild,unrs-resolver
+        
 
       - name: Check TypeScript Types
         run: pnpm exec tsc --noEmit
