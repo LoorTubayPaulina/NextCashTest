@@ -2,6 +2,12 @@
   "name": "nextcrash-course",
   "version": "0.1.0",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
