@@ -1,6 +1,10 @@
 // Pure dashboard logic: no database or server-only imports, so it can be
 // shared by server components and client components alike.
 
+import { isCanonicalSearchParam, type SearchParamValue } from "@/lib/search-params";
+
+export const DASHBOARD_PATH = "/dashboard";
+
 export type CategoryType = "income" | "expense";
 
 // Shape of a transaction row needed for the dashboard calculations.
@@ -90,14 +94,44 @@ export function isAcceptedYear(year: number, currentYear: number): boolean {
   return year >= MIN_VALID_YEAR && year <= currentYear + FUTURE_YEARS_ALLOWED;
 }
 
-// Returns the year from the URL, or the current year when it is not a valid, accepted 4-digit year.
-export function resolveYear(value: string | undefined, currentYear: number): number {
+// Returns the year from the URL when it is a valid, accepted 4-digit year, otherwise null.
+export function parseYearParam(value: string | undefined, currentYear: number): number | null {
   if (value === undefined || !YEAR_PATTERN.test(value)) {
-    return currentYear;
+    return null;
   }
 
   const year = Number(value);
-  return isAcceptedYear(year, currentYear) ? year : currentYear;
+  return isAcceptedYear(year, currentYear) ? year : null;
+}
+
+// Returns the year from the URL, or the current year when it is not a valid, accepted 4-digit year.
+export function resolveYear(value: string | undefined, currentYear: number): number {
+  return parseYearParam(value, currentYear) ?? currentYear;
+}
+
+// Returns the URL the dashboard should redirect to so that the address matches the displayed year,
+// or null when the URL is already canonical. A repeated param uses its first value.
+export function getCanonicalDashboardHref(
+  yearParam: SearchParamValue,
+  currentYear: number,
+): string | null {
+  if (yearParam === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(yearParam)) {
+    const year = parseYearParam(yearParam[0], currentYear);
+    return year === null ? DASHBOARD_PATH : `${DASHBOARD_PATH}?year=${year}`;
+  }
+
+  const year = parseYearParam(yearParam, currentYear);
+  if (year === null) {
+    return DASHBOARD_PATH;
+  }
+
+  return isCanonicalSearchParam(yearParam, String(year))
+    ? null
+    : `${DASHBOARD_PATH}?year=${year}`;
 }
 
 // Current year plus previous years, always including the selected year, newest first.

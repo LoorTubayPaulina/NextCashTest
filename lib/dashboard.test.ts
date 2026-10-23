@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   buildMonthlyCashflow,
   calculateCashflowTotals,
+  DASHBOARD_PATH,
   formatCurrency,
+  getCanonicalDashboardHref,
   getYAxisTicks,
   getYearOptions,
   parseAmount,
+  parseYearParam,
   resolveYear,
   type DashboardTransaction,
 } from "@/lib/dashboard";
@@ -39,6 +42,77 @@ describe("resolveYear", () => {
       expect(resolveYear(value, CURRENT_YEAR)).toBe(CURRENT_YEAR);
     },
   );
+});
+
+describe("parseYearParam", () => {
+  it("returns the year as a number when it is a valid accepted year", () => {
+    expect(parseYearParam("2024", CURRENT_YEAR)).toBe(2024);
+  });
+
+  it("accepts 2000 and the next year as the range boundaries", () => {
+    expect(parseYearParam("2000", CURRENT_YEAR)).toBe(2000);
+    expect(parseYearParam("2027", CURRENT_YEAR)).toBe(2027);
+  });
+
+  it("returns null when no value is provided", () => {
+    expect(parseYearParam(undefined, CURRENT_YEAR)).toBeNull();
+  });
+
+  it.each(["1999", "2028"])("returns null for a year outside the accepted range %j", (value) => {
+    expect(parseYearParam(value, CURRENT_YEAR)).toBeNull();
+  });
+
+  it.each(["202", "20255", "20a5", "2025.0", " 2025", "", "abcd"])(
+    "returns null for malformed value %j",
+    (value) => {
+      expect(parseYearParam(value, CURRENT_YEAR)).toBeNull();
+    },
+  );
+});
+
+describe("getCanonicalDashboardHref", () => {
+  it("returns null when there is no year param", () => {
+    expect(getCanonicalDashboardHref(undefined, CURRENT_YEAR)).toBeNull();
+  });
+
+  it("returns null when the year param is already canonical", () => {
+    expect(getCanonicalDashboardHref("2024", CURRENT_YEAR)).toBeNull();
+    expect(getCanonicalDashboardHref("2027", CURRENT_YEAR)).toBeNull();
+  });
+
+  it("redirects an out-of-range year to the bare dashboard path", () => {
+    expect(getCanonicalDashboardHref("1999", CURRENT_YEAR)).toBe(DASHBOARD_PATH);
+    expect(getCanonicalDashboardHref("2028", CURRENT_YEAR)).toBe(DASHBOARD_PATH);
+  });
+
+  it.each(["", "abcd", "202", "2025.0", " 2025", "2025 "])(
+    "redirects malformed year %j to the bare dashboard path",
+    (value) => {
+      expect(getCanonicalDashboardHref(value, CURRENT_YEAR)).toBe(DASHBOARD_PATH);
+    },
+  );
+
+  it("uses the first value of a repeated valid year", () => {
+    expect(getCanonicalDashboardHref(["2024", "2025"], CURRENT_YEAR)).toBe(
+      "/dashboard?year=2024",
+    );
+  });
+
+  it("redirects a repeated year to the bare dashboard path when the first value is invalid", () => {
+    expect(getCanonicalDashboardHref(["1999", "2025"], CURRENT_YEAR)).toBe(DASHBOARD_PATH);
+  });
+
+  it("redirects an empty repeated year to the bare dashboard path", () => {
+    expect(getCanonicalDashboardHref([], CURRENT_YEAR)).toBe(DASHBOARD_PATH);
+  });
+
+  it("is idempotent: the redirect target is canonical", () => {
+    const href = getCanonicalDashboardHref(["2024", "2025"], CURRENT_YEAR);
+    const search = href?.split("?")[1] ?? "";
+    const year = new URLSearchParams(search).get("year") ?? undefined;
+
+    expect(getCanonicalDashboardHref(year, CURRENT_YEAR)).toBeNull();
+  });
 });
 
 describe("getYearOptions", () => {

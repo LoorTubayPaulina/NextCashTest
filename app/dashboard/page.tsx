@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import CashflowChart from "@/components/dashboard/cashflow-chart";
 import RecentTransactions, {
   type RecentTransaction,
@@ -15,6 +16,7 @@ import { getTransactions } from "@/data/getTransactions";
 import {
   buildMonthlyCashflow,
   calculateCashflowTotals,
+  getCanonicalDashboardHref,
   getYearOptions,
   parseAmount,
   resolveYear,
@@ -33,6 +35,13 @@ export default async function DashboardPage({
   const { year: yearParam } = await searchParams;
 
   const currentYear = new Date().getFullYear();
+
+  // Redirect before any data is loaded when the year in the URL is not in its canonical form.
+  const canonicalHref = getCanonicalDashboardHref(yearParam, currentYear);
+  if (canonicalHref !== null) {
+    redirect(canonicalHref);
+  }
+
   // A repeated query param (?year=2024&year=2025) arrives as an array; use the first value.
   const rawYear = Array.isArray(yearParam) ? yearParam[0] : yearParam;
   const selectedYear = resolveYear(rawYear, currentYear);

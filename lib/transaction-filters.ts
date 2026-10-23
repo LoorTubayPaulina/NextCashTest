@@ -7,6 +7,7 @@ import {
   YEAR_PATTERN,
   type CategoryType,
 } from "@/lib/dashboard";
+import { isCanonicalSearchParam, type SearchParamValue } from "@/lib/search-params";
 
 export const TRANSACTIONS_PATH = "/dashboard/transaction";
 
@@ -55,6 +56,22 @@ export function parseTransactionFilters(
   );
 
   return { type, year };
+}
+
+// Returns the list URL to redirect to when the raw params do not match the parsed filters, or null
+// when they already do. Absent params and explicit "all" are canonical; unknown params are ignored.
+export function getCanonicalTransactionFiltersHref(
+  params: { type?: SearchParamValue; year?: SearchParamValue },
+  currentYear: number,
+): string | null {
+  const filters = parseTransactionFilters(params, currentYear);
+  const canonicalYear = filters.year === "all" ? "all" : String(filters.year);
+
+  const isCanonical =
+    isCanonicalSearchParam(params.type, filters.type) &&
+    isCanonicalSearchParam(params.year, canonicalYear);
+
+  return isCanonical ? null : buildTransactionFiltersHref(filters, {});
 }
 
 // Builds the list URL for the given filters, leaving out defaults (type=all, year=all).

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { ChevronRightIcon } from "lucide-react";
 import TransactionFilters from "@/components/transactions/transaction-filters";
 import TransactionsTable, {
@@ -12,6 +13,7 @@ import { getTransactionYears } from "@/data/getTransactionYears";
 import { parseAmount } from "@/lib/dashboard";
 import {
   buildTransactionFiltersHref,
+  getCanonicalTransactionFiltersHref,
   getTransactionYearOptions,
   parseTransactionFilters,
 } from "@/lib/transaction-filters";
@@ -25,8 +27,16 @@ export default async function TransactionsPage({
 }: TransactionsPageProps) {
   const { userId } = await auth.protect();
 
+  const params = await searchParams;
   const currentYear = new Date().getFullYear();
-  const filters = parseTransactionFilters(await searchParams, currentYear);
+
+  // Redirect before any data is loaded when the URL filters are not in their canonical form.
+  const canonicalHref = getCanonicalTransactionFiltersHref(params, currentYear);
+  if (canonicalHref !== null) {
+    redirect(canonicalHref);
+  }
+
+  const filters = parseTransactionFilters(params, currentYear);
 
   const [transactions, dataYears] = await Promise.all([
     getAllTransactions(userId, {

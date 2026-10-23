@@ -6,9 +6,13 @@ import TransactionsPage from "@/app/dashboard/transaction/page";
 import { getAllTransactions } from "@/data/getAllTransactions";
 import { getTransactionYears } from "@/data/getTransactionYears";
 
-const { protectMock, pushMock } = vi.hoisted(() => ({
+const { protectMock, pushMock, redirectMock } = vi.hoisted(() => ({
   protectMock: vi.fn(),
   pushMock: vi.fn(),
+  // Mirrors next/navigation redirect(), which throws to stop rendering. The sentinel message carries the target.
+  redirectMock: vi.fn((url: string): never => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -17,6 +21,7 @@ vi.mock("@clerk/nextjs/server", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  redirect: redirectMock,
 }));
 
 vi.mock("@/data/getAllTransactions", () => ({
@@ -98,13 +103,59 @@ describe("TransactionsPage", () => {
       });
     });
 
-    it("ignores an invalid type and year in the URL and queries without them", async () => {
-      await renderPage({ type: "salary", year: "1999" });
+    it("redirects an invalid type and year to the canonical URL without querying any data", async () => {
+      await expect(renderPage({ type: "salary", year: "1999" })).rejects.toThrow(
+        "NEXT_REDIRECT:/dashboard/transaction",
+      );
 
+      expect(redirectMock).toHaveBeenCalledWith("/dashboard/transaction");
+      expect(getAllTransactions).not.toHaveBeenCalled();
+      expect(getTransactionYears).not.toHaveBeenCalled();
+    });
+
+    it("redirects to a URL that keeps only the valid filters", async () => {
+      await expect(renderPage({ type: "bogus", year: "2024" })).rejects.toThrow(
+        "NEXT_REDIRECT:/dashboard/transaction?year=2024",
+      );
+
+      expect(redirectMock).toHaveBeenCalledWith("/dashboard/transaction?year=2024");
+      expect(getAllTransactions).not.toHaveBeenCalled();
+    });
+
+    it("does not redirect when the URL filters are canonical", async () => {
+      await renderPage({ type: "expense", year: "2024" });
+
+      expect(redirectMock).not.toHaveBeenCalled();
+      expect(getAllTransactions).toHaveBeenCalledWith(USER_ID, {
+        type: "expense",
+        year: 2024,
+      });
+    });
+
+    it("does not redirect when the filters are explicitly all", async () => {
+      await renderPage({ type: "all", year: "all" });
+
+      expect(redirectMock).not.toHaveBeenCalled();
       expect(getAllTransactions).toHaveBeenCalledWith(USER_ID, {
         type: undefined,
         year: undefined,
       });
+    });
+
+    it("does not redirect when there are no filter params", async () => {
+      await renderPage();
+
+      expect(redirectMock).not.toHaveBeenCalled();
+    });
+
+    it("redirects before any data loader is called", async () => {
+      await expect(renderPage({ year: "1999" })).rejects.toThrow(
+        "NEXT_REDIRECT:/dashboard/transaction",
+      );
+
+      expect(redirectMock).toHaveBeenCalledTimes(1);
+      expect(getAllTransactions).not.toHaveBeenCalled();
+      expect(getTransactionYears).not.toHaveBeenCalled();
     });
   });
 

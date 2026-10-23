@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTransactionFiltersHref,
+  getCanonicalTransactionFiltersHref,
   getTransactionYearOptions,
   parseTransactionFilters,
 } from "@/lib/transaction-filters";
@@ -168,6 +169,64 @@ describe("buildTransactionFiltersHref", () => {
     expect(
       buildTransactionFiltersHref({ type: "expense", year: 2023 }, { type: "all", year: "all" }),
     ).toBe("/dashboard/transaction");
+  });
+});
+
+describe("getCanonicalTransactionFiltersHref", () => {
+  it.each([
+    [{ year: "1999" }, "/dashboard/transaction"],
+    [{ type: "bogus", year: "2024" }, "/dashboard/transaction?year=2024"],
+    [{ year: ["2024", "2025"] }, "/dashboard/transaction?year=2024"],
+    [{ year: "" }, "/dashboard/transaction"],
+    [{ type: ["income", "expense"] }, "/dashboard/transaction?type=income"],
+    [{ type: "" }, "/dashboard/transaction"],
+    [{ type: "income", year: "1999" }, "/dashboard/transaction?type=income"],
+    [{ type: "expense", year: "2028" }, "/dashboard/transaction?type=expense"],
+  ])("redirects non-canonical params %j to %s", (params, expected) => {
+    expect(getCanonicalTransactionFiltersHref(params, CURRENT_YEAR)).toBe(expected);
+  });
+
+  it.each([
+    [{ type: "all" }],
+    [{ year: "all" }],
+    [{ type: "all", year: "all" }],
+    [{ foo: "1" } as Record<string, string>],
+    [{}],
+    [{ year: "2024" }],
+    [{ type: "income", year: "2024" }],
+    [{ type: "expense", year: "2027" }],
+  ])("does not redirect canonical params %j", (params) => {
+    expect(getCanonicalTransactionFiltersHref(params, CURRENT_YEAR)).toBeNull();
+  });
+
+  it("ignores unknown params alongside valid filters", () => {
+    const unknownParams: Record<string, string> = { type: "income", foo: "1" };
+
+    expect(getCanonicalTransactionFiltersHref(unknownParams, CURRENT_YEAR)).toBeNull();
+  });
+
+  it("validates the year against the currentYear it is given", () => {
+    expect(getCanonicalTransactionFiltersHref({ year: "2030" }, 2029)).toBeNull();
+    expect(getCanonicalTransactionFiltersHref({ year: "2030" }, CURRENT_YEAR)).toBe(
+      "/dashboard/transaction",
+    );
+  });
+
+  it.each([
+    [{ year: "1999" }],
+    [{ type: "bogus", year: "2024" }],
+    [{ year: ["2024", "2025"] }],
+    [{ year: "" }],
+    [{ type: ["income", "expense"] }],
+    [{ type: "income", year: "1999" }],
+  ])("is idempotent: the redirect target for %j is canonical", (params) => {
+    const href = getCanonicalTransactionFiltersHref(params, CURRENT_YEAR);
+    expect(href).not.toBeNull();
+
+    const query = href?.split("?")[1] ?? "";
+    const canonicalParams = Object.fromEntries(new URLSearchParams(query));
+
+    expect(getCanonicalTransactionFiltersHref(canonicalParams, CURRENT_YEAR)).toBeNull();
   });
 });
 
