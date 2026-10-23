@@ -34,3 +34,13 @@ jobs:
 
       - name: Run Linter
         run: pnpm lint
+
+      - name: Notificar a Slack
+        if: always() # Se ejecuta pase o falle el pipeline
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: "Estado del Pipeline en NextCash: ${{ job.status }}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
