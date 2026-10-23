@@ -7,11 +7,11 @@ import {
   ClerkProvider,
   Show,
   SignInButton,
-  SignOutButton,
   SignUpButton,
 } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/user-menu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +36,8 @@ export default async function RootLayout({
   const user = await currentUser();
   const displayName =
     user?.fullName ?? user?.username ?? user?.primaryEmailAddress?.emailAddress;
+  const email = user?.primaryEmailAddress?.emailAddress ?? null;
+  const imageUrl = user?.imageUrl ?? null;
 
   return (
     <ClerkProvider>
@@ -65,12 +67,11 @@ export default async function RootLayout({
             </Show>
             <Show when="signed-in">
               <div className="flex items-center gap-4">
-                <span>{displayName}</span>
-                <SignOutButton>
-                  <Button variant="link" className="text-white">
-                    Sign out
-                  </Button>
-                </SignOutButton>
+                <UserMenu
+                  displayName={displayName ?? ""}
+                  email={email}
+                  imageUrl={imageUrl}
+                />
               </div>
             </Show>
           </nav>
