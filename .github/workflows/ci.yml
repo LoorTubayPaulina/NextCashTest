@@ -1,37 +1,35 @@
 name: CI Checks
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  verify-code:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 12
+          node-version: 20
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: |
-          echo "only-built-dependencies=esbuild,unrs-resolver" >> .npmrc
-          pnpm install --no-frozen-lockfile
-        
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Check TypeScript Types
+      - name: Run Typecheck
         run: pnpm exec tsc --noEmit
 
       - name: Run Linter
