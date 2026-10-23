@@ -36,5 +36,6 @@ export function rejectingQuery(error: unknown, methodNames: readonly string[]): 
 // Shared mock object used through vi.mock("@/db") in test files.
 export const mockDb = {
   select: vi.fn(),
+  selectDistinct: vi.fn(),
   insert: vi.fn(),
 };

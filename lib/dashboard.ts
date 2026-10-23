@@ -40,7 +40,7 @@ export type CashflowTotals = {
   balance: number;
 };
 
-const YEAR_PATTERN = /^\d{4}$/;
+export const YEAR_PATTERN = /^\d{4}$/;
 const MIN_VALID_YEAR = 2000;
 const FUTURE_YEARS_ALLOWED = 1; // next year is accepted, nothing further ahead
 const YEARS_BEFORE_CURRENT = 4;
@@ -86,7 +86,7 @@ export function formatAxisCurrency(value: number): string {
 }
 
 // A year is accepted from MIN_VALID_YEAR up to the current year plus one.
-function isAcceptedYear(year: number, currentYear: number): boolean {
+export function isAcceptedYear(year: number, currentYear: number): boolean {
   return year >= MIN_VALID_YEAR && year <= currentYear + FUTURE_YEARS_ALLOWED;
 }
 
