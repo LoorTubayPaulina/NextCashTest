@@ -39,8 +39,13 @@ jobs:
         if: always() # Se ejecuta pase o falle el pipeline
         uses: 8398a7/action-slack@v3
         with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-          text: "Estado del Pipeline en NextCash: ${{ job.status }}"
+                  status: custom
+                  custom_payload: |
+                    {
+                      attachments: [{
+                        color: '${{ job.status }}' === 'success' ? '#36a64f' : '#FF0000',
+                        text: `${'${{ job.status }}' === 'success' ? '🟢 *CI PASSED*' : '🔴 *CI FAILED*'}\n*Repositorio:* ${{ github.repository }}\n*Commit:* ${{ github.event.head_commit.message }}\n*Autor:* ${{ github.actor }}`
+                      }]
+                    }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
