@@ -26,7 +26,11 @@ jobs:
           version: 12
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile --config.only-built-dependencies=esbuild,unrs-resolver
+        env:
+          PNPM_ONLY_BUILT_DEPENDENCIES: "esbuild,unrs-resolver"
+        run: |
+          pnpm config set only-built-dependencies esbuild unrs-resolver
+          pnpm install --no-frozen-lockfile
         
 
       - name: Check TypeScript Types
