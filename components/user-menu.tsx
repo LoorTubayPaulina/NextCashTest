@@ -41,57 +41,65 @@ export function UserMenu({ displayName, email, imageUrl }: UserMenuProps) {
   const initials = getInitials(displayName, email);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            className="rounded-full text-white hover:bg-white/10"
-            aria-label="Open user menu"
-          />
-        }
-      >
-        <Avatar>
-          <AvatarImage src={imageUrl ?? undefined} alt={displayName} />
-          <AvatarFallback className="bg-primary-foreground/20 text-white">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-      </DropdownMenuTrigger>
+    <div className="flex items-center gap-3">
+      {email ? (
+        <span className="hidden max-w-64 truncate text-sm text-white/80 md:block">
+          {email}
+        </span>
+      ) : null}
 
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="flex flex-col gap-0.5">
-            <span className="truncate text-sm font-medium text-foreground">
-              {displayName}
-            </span>
-            {email ? (
-              <span className="truncate text-xs font-normal text-muted-foreground">
-                {email}
-              </span>
-            ) : null}
-          </DropdownMenuLabel>
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem render={<Link href="/dashboard" />}>
-          <LayoutDashboardIcon />
-          Dashboard
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem
-          onClick={() => {
-            void signOut({ redirectUrl: "/" });
-          }}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              className="rounded-full text-white hover:bg-white/10"
+              aria-label="Open user menu"
+            />
+          }
         >
-          <LogOutIcon />
-          Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <Avatar>
+            <AvatarImage src={imageUrl ?? undefined} alt={displayName} />
+            <AvatarFallback className="bg-primary-foreground/20 text-white">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="flex flex-col gap-0.5">
+              <span className="truncate text-sm font-medium text-foreground">
+                {displayName}
+              </span>
+              {email ? (
+                <span className="truncate text-xs font-normal text-muted-foreground">
+                  {email}
+                </span>
+              ) : null}
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem render={<Link href="/dashboard" />}>
+            <LayoutDashboardIcon />
+            Dashboard
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onClick={() => {
+              void signOut({ redirectUrl: "/" });
+            }}
+          >
+            <LogOutIcon />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

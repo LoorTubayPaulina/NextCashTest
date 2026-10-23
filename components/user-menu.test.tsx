@@ -87,4 +87,26 @@ describe("UserMenu", () => {
       expect(signOutMock).toHaveBeenCalledWith({ redirectUrl: "/" });
     });
   });
+
+  describe("email next to avatar", () => {
+    it("shows the email before opening the menu", () => {
+      render(<UserMenu displayName={DISPLAY_NAME} email={EMAIL} imageUrl={null} />);
+
+      expect(screen.getByText(EMAIL)).toBeInTheDocument();
+    });
+
+    it("renders the email outside the trigger button", () => {
+      render(<UserMenu displayName={DISPLAY_NAME} email={EMAIL} imageUrl={null} />);
+
+      const trigger = screen.getByRole("button", { name: "Open user menu" });
+      expect(trigger).not.toContainElement(screen.getByText(EMAIL));
+    });
+
+    it("does not render the email text and still renders the avatar when email is null", () => {
+      render(<UserMenu displayName={DISPLAY_NAME} email={null} imageUrl={null} />);
+
+      expect(screen.queryByText(EMAIL)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open user menu" })).toHaveTextContent("AL");
+    });
+  });
 });
