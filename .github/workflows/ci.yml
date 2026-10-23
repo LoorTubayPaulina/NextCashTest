@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
           env:
             COREPACK_ENABLE_STRICT: "0"
-          run: |
+          run:
             pnpm config set only-built-dependencies '["esbuild", "unrs-resolver"]'
             pnpm install --no-frozen-lockfile
         
