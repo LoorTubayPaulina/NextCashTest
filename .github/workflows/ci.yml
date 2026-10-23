@@ -26,7 +26,7 @@ jobs:
           version: 12
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --no-only-built-dependencies
 
       - name: Check TypeScript Types
         run: pnpm exec tsc --noEmit
